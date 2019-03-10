@@ -1,0 +1,8 @@
+[package]
+name = "imitare"
+version = "0.1.0"
+authors = ["Yishen Miao <mys721tx@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.6"
