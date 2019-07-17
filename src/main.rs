@@ -8,9 +8,11 @@ fn main() {
     let mut buffer = File::create("foo.txt").unwrap();
     let mut rng = StdRng::from_entropy();
 
-    let mut arr = [0u8; 128];
+    let mut arr = [0u8; 256];
 
-    rng.fill_bytes(&mut arr);
+    for _ in 0..10 {
+        rng.fill_bytes(&mut arr);
 
-    buffer.write_all(&arr).unwrap();
+        buffer.write_all(&arr).unwrap();
+    }
 }
