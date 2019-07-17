@@ -1,5 +1,3 @@
-extern crate rand;
-
 use std::io::prelude::*;
 use std::fs::File;
 use rand::prelude::*;
