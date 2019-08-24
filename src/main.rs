@@ -1,8 +1,10 @@
-use clap::{App, Arg};
-use rand::prelude::*;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use std::path::Path;
+
+use clap::{App, Arg};
+use rand::prelude::*;
 
 fn main() {
     let mut rng = StdRng::from_entropy();
@@ -34,30 +36,36 @@ fn main() {
                 .short("t")
                 .long("type")
                 .value_name("TYPE")
-                .help("Sets the header type of the output. Not enabled by default.")
+                .help("Sets the type of the output file. If not set, the file type is inferred \
+                from the output extension. Defaults to txt.")
                 .takes_value(true),
         )
         .get_matches();
 
-    let file = matches.value_of("output").unwrap_or("output.txt");
+    let filename = Path::new(matches.value_of("output").unwrap_or("output"));
     let size = matches
         .value_of("size")
         .and_then(|x| x.parse::<u64>().ok())
         .unwrap_or(4096);
+    let filetype = matches
+        .value_of("type")
+        .or_else(|| filename.extension().and_then(|x| x.to_str()))
+        .unwrap_or("txt");
 
-    let header = match matches.value_of("type") {
-        Some("zip") => vec![
-            0x50, 0x4b, 0x3, 0x4, 0xa, 0x0, 0x0, 0x0, 0x0, 0x0, 0x26, 0x79, 0x5d, 0x40, 0xde, 0xbd,
-            0xac, 0x82, 0x0, 0x4, 0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0xa, 0x0, 0x1c, 0x0,
+    let header = match filetype {
+        "zip" => vec![
+            0x50, 0x4b, 0x03, 0x04, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x26, 0x79, 0x5d, 0x40,
+            0xde, 0xbd, 0xac, 0x82, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x0a, 0x00,
+            0x1c, 0x00,
         ],
-        Some("pdf") => vec![
-            0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0xa, 0x25, 0xe1, 0xe9, 0xeb,
+        "pdf" => vec![
+            0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe1, 0xe9, 0xeb,
         ],
-        Some("doc") => vec![0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
+        "doc" => vec![0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
         _ => vec![],
     };
 
-    let mut buffer = File::create(file).unwrap();
+    let mut buffer = File::create(filename.with_extension(filetype)).unwrap();
 
     let r = &mut rng as &mut dyn RngCore;
 
