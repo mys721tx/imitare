@@ -24,7 +24,17 @@ fn main() {
                 .short("s")
                 .long("size")
                 .value_name("SIZE")
-                .help("Sets the size of the output in byte. Defaults to 4096.")
+                .help("Sets the size of the output in byte. Defaults to 4096. If a type is set, \
+                the type header will be written regardless of size. Any remaining bytes will be \
+                written afterward.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("type")
+                .short("t")
+                .long("type")
+                .value_name("TYPE")
+                .help("Sets the header type of the output. Not enabled by default.")
                 .takes_value(true),
         )
         .get_matches();
@@ -34,9 +44,28 @@ fn main() {
         .value_of("size")
         .and_then(|x| x.parse::<u64>().ok())
         .unwrap_or(4096);
+
+    let header = match matches.value_of("type") {
+        Some("zip") => vec![
+            0x50, 0x4b, 0x3, 0x4, 0xa, 0x0, 0x0, 0x0, 0x0, 0x0, 0x26, 0x79, 0x5d, 0x40, 0xde, 0xbd,
+            0xac, 0x82, 0x0, 0x4, 0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0xa, 0x0, 0x1c, 0x0,
+        ],
+        Some("pdf") => vec![
+            0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0xa, 0x25, 0xe1, 0xe9, 0xeb,
+        ],
+        Some("doc") => vec![0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
+        _ => vec![],
+    };
+
     let mut buffer = File::create(file).unwrap();
 
     let r = &mut rng as &mut dyn RngCore;
 
-    io::copy(&mut r.take(size), &mut buffer).unwrap();
+    buffer.write_all(&header).unwrap();
+
+    io::copy(
+        &mut r.take(size.saturating_sub(header.len() as u64)),
+        &mut buffer,
+    )
+    .unwrap();
 }
