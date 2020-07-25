@@ -26,9 +26,11 @@ fn main() {
                 .short("s")
                 .long("size")
                 .value_name("SIZE")
-                .help("Sets the size of the output in byte. Defaults to 4096. If a type is set, \
+                .help(
+                    "Sets the size of the output in byte. Defaults to 4096. If a type is set, \
                 the type header will be written regardless of size. Any remaining bytes will be \
-                written afterward.")
+                written afterward.",
+                )
                 .takes_value(true),
         )
         .arg(
@@ -36,8 +38,10 @@ fn main() {
                 .short("t")
                 .long("type")
                 .value_name("TYPE")
-                .help("Sets the type of the output file. If not set, the file type is inferred \
-                from the output extension. Defaults to txt.")
+                .help(
+                    "Sets the type of the output file. If not set, the file type is inferred \
+                from the output extension. Defaults to txt.",
+                )
                 .takes_value(true),
         )
         .get_matches();
