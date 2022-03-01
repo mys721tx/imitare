@@ -5,7 +5,7 @@ license = "GPL-3.0-or-later"
 repository = "https://github.com/mys721tx/imitare"
 version = "0.2.0"
 authors = ["Yishen Miao <mys721tx@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 rand = "0.8"
