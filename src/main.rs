@@ -3,27 +3,27 @@ use std::io;
 use std::io::prelude::*;
 use std::path::Path;
 
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use rand::prelude::*;
 
 fn main() {
     let mut rng = StdRng::from_entropy();
 
-    let matches = App::new("imitare")
+    let matches = Command::new("imitare")
         .version("0.1")
         .author("Yishen Miao <mys721tx@gmail.com>")
         .about("A fake file generator")
         .arg(
-            Arg::with_name("output")
-                .short("o")
+            Arg::new("output")
+                .short('o')
                 .long("out")
                 .value_name("FILE")
                 .help("Sets the name of the output file. Defaults to \"output.txt\".")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("size")
-                .short("s")
+            Arg::new("size")
+                .short('s')
                 .long("size")
                 .value_name("SIZE")
                 .help(
@@ -34,8 +34,8 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("type")
-                .short("t")
+            Arg::new("type")
+                .short('t')
                 .long("type")
                 .value_name("TYPE")
                 .help(
