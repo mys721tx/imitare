@@ -1,5 +1,5 @@
 # imitare
-[![Build Status](https://travis-ci.com/mys721tx/imitare.svg?branch=master)](https://travis-ci.com/mys721tx/imitare)
+[![CI](https://github.com/mys721tx/imitare/actions/workflows/rust.yml/badge.svg)](https://github.com/mys721tx/imitare/actions/workflows/rust.yml)
 
 By [Yishen Miao](https://github.com/mys721tx)
 
