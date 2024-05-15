@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master dev ]
   pull_request:
     branches: [ master ]
 
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -19,15 +19,15 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt
-      
+
       - name: Check format
         run: cargo fmt -- --check
-     
+
   Linting:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -35,7 +35,7 @@ jobs:
           toolchain: stable
           override: true
           components: clippy
-      
+
       - name: Lint with clippy
         uses: actions-rs/clippy-check@v1
         with:
@@ -63,7 +63,7 @@ jobs:
             rust: stable
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - uses: actions-rs/toolchain@v1
         with:
@@ -87,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install nightly toolchain
         uses: actions-rs/toolchain@v1
