@@ -1,5 +1,3 @@
-use std::ffi::OsStr;
-use std::fmt;
 use std::io;
 use std::io::prelude::*;
 use std::str::FromStr;
@@ -7,70 +5,15 @@ use std::{fs::File, path::PathBuf};
 
 use clap::{value_parser, Arg, Command};
 use rand::prelude::*;
+use strum_macros::{AsRefStr, Display, EnumString};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, EnumString, AsRefStr, Display)]
+#[strum(serialize_all = "lowercase")]
 enum Extension {
     Zip,
     Pdf,
     Doc,
     Txt,
-}
-
-impl From<String> for Extension {
-    fn from(s: String) -> Self {
-        match Extension::from_str(&s) {
-            Ok(extension) => extension,
-            Err(_) => panic!("Invalid extension"),
-        }
-    }
-}
-
-impl From<&OsStr> for Extension {
-    fn from(os_str: &OsStr) -> Self {
-        match os_str.to_str() {
-            Some(s) => match Extension::from_str(s) {
-                Ok(extension) => extension,
-                Err(_) => panic!("Invalid extension"),
-            },
-            _ => panic!("Invalid extension"),
-        }
-    }
-}
-
-impl FromStr for Extension {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "zip" => Ok(Extension::Zip),
-            "pdf" => Ok(Extension::Pdf),
-            "doc" => Ok(Extension::Doc),
-            "txt" => Ok(Extension::Txt),
-            _ => Err(()),
-        }
-    }
-}
-
-impl AsRef<OsStr> for Extension {
-    fn as_ref(&self) -> &OsStr {
-        match self {
-            Extension::Zip => OsStr::new("zip"),
-            Extension::Pdf => OsStr::new("pdf"),
-            Extension::Doc => OsStr::new("doc"),
-            Extension::Txt => OsStr::new("txt"),
-        }
-    }
-}
-
-impl fmt::Display for Extension {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Extension::Zip => write!(f, "zip"),
-            Extension::Pdf => write!(f, "pdf"),
-            Extension::Doc => write!(f, "doc"),
-            Extension::Txt => write!(f, "txt"),
-        }
-    }
 }
 
 impl Extension {
@@ -140,13 +83,14 @@ fn main() {
     let size: &u64 = matches.get_one("size").unwrap();
     let ext = filename
         .extension()
-        .map(|ext| Extension::from(ext))
+        .and_then(|ext| ext.to_str())
+        .and_then(|ext| Extension::from_str(ext).ok())
         .unwrap_or(Extension::Txt);
     let filetype: &Extension = matches.get_one::<Extension>("type").unwrap_or(&ext);
 
     let header = filetype.header();
 
-    let mut buffer = File::create(filename.with_extension(filetype)).unwrap();
+    let mut buffer = File::create(filename.with_extension(filetype.as_ref())).unwrap();
 
     let r = &mut rng as &mut dyn RngCore;
 
