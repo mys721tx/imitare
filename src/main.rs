@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::fmt;
 use std::io;
 use std::io::prelude::*;
@@ -24,6 +25,18 @@ impl From<String> for Extension {
     }
 }
 
+impl From<&OsStr> for Extension {
+    fn from(os_str: &OsStr) -> Self {
+        match os_str.to_str() {
+            Some(s) => match Extension::from_str(s) {
+                Ok(extension) => extension,
+                Err(_) => panic!("Invalid extension"),
+            },
+            _ => panic!("Invalid extension"),
+        }
+    }
+}
+
 impl FromStr for Extension {
     type Err = ();
 
@@ -38,6 +51,17 @@ impl FromStr for Extension {
     }
 }
 
+impl AsRef<OsStr> for Extension {
+    fn as_ref(&self) -> &OsStr {
+        match self {
+            Extension::Zip => OsStr::new("zip"),
+            Extension::Pdf => OsStr::new("pdf"),
+            Extension::Doc => OsStr::new("doc"),
+            Extension::Txt => OsStr::new("txt"),
+        }
+    }
+}
+
 impl fmt::Display for Extension {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -45,6 +69,23 @@ impl fmt::Display for Extension {
             Extension::Pdf => write!(f, "pdf"),
             Extension::Doc => write!(f, "doc"),
             Extension::Txt => write!(f, "txt"),
+        }
+    }
+}
+
+impl Extension {
+    fn header(&self) -> Vec<u8> {
+        match self {
+            Extension::Zip => vec![
+                0x50, 0x4b, 0x03, 0x04, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x26, 0x79, 0x5d, 0x40,
+                0xde, 0xbd, 0xac, 0x82, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x0a, 0x00,
+                0x1c, 0x00,
+            ],
+            Extension::Pdf => vec![
+                0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe1, 0xe9, 0xeb,
+            ],
+            Extension::Doc => vec![0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
+            _ => vec![],
         }
     }
 }
@@ -87,7 +128,6 @@ fn main() {
                 .long("type")
                 .value_name("TYPE")
                 .value_parser(value_parser!(Extension))
-                .default_value("txt")
                 .action(clap::ArgAction::Set)
                 .help(
                     "Sets the type of the output file. If not set, the file type is inferred \
@@ -98,22 +138,15 @@ fn main() {
 
     let filename: &PathBuf = matches.get_one("output").unwrap();
     let size: &u64 = matches.get_one("size").unwrap();
-    let filetype: &Extension = matches.get_one("type").unwrap();
+    let ext = filename
+        .extension()
+        .map(|ext| Extension::from(ext))
+        .unwrap_or(Extension::Txt);
+    let filetype: &Extension = matches.get_one::<Extension>("type").unwrap_or(&ext);
 
-    let header = match filetype {
-        Extension::Zip => vec![
-            0x50, 0x4b, 0x03, 0x04, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x26, 0x79, 0x5d, 0x40,
-            0xde, 0xbd, 0xac, 0x82, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x0a, 0x00,
-            0x1c, 0x00,
-        ],
-        Extension::Pdf => vec![
-            0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe1, 0xe9, 0xeb,
-        ],
-        Extension::Doc => vec![0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
-        _ => vec![],
-    };
+    let header = filetype.header();
 
-    let mut buffer = File::create(filename.with_extension(filetype.to_string())).unwrap();
+    let mut buffer = File::create(filename.with_extension(filetype)).unwrap();
 
     let r = &mut rng as &mut dyn RngCore;
 
