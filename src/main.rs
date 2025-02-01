@@ -34,7 +34,7 @@ impl Extension {
 }
 
 fn main() {
-    let mut rng = StdRng::from_entropy();
+    let mut rng = StdRng::from_os_rng();
 
     let matches = Command::new("imitare")
         .version("0.1")
@@ -92,13 +92,9 @@ fn main() {
 
     let mut buffer = File::create(filename.with_extension(filetype.as_ref())).unwrap();
 
-    let r = &mut rng as &mut dyn RngCore;
-
+    let mut rest = vec![0u8; size.saturating_sub(header.len() as u64) as usize];
+    rng.fill_bytes(&mut rest);
     buffer.write_all(&header).unwrap();
 
-    io::copy(
-        &mut r.take(size.saturating_sub(header.len() as u64)),
-        &mut buffer,
-    )
-    .unwrap();
+    io::copy(&mut &rest[..], &mut buffer).unwrap();
 }
