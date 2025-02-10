@@ -11,4 +11,4 @@ edition = "2021"
 rand = "0.9"
 clap = { version = "4.5", features = ["derive"] }
 strum = { version = "0.26", features = ["derive", "strum_macros"] }
-strum_macros = "0.26"
+strum_macros = "0.27"
