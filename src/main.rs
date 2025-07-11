@@ -1,37 +1,10 @@
-use std::io;
-use std::io::prelude::*;
-use std::str::FromStr;
-use std::{fs::File, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::{value_parser, Arg, Command};
 use rand::prelude::*;
-use strum_macros::{AsRefStr, Display, EnumString};
 
-#[derive(Clone, Copy, EnumString, AsRefStr, Display)]
-#[strum(serialize_all = "lowercase")]
-enum Extension {
-    Zip,
-    Pdf,
-    Doc,
-    Txt,
-}
-
-impl Extension {
-    fn header(&self) -> Vec<u8> {
-        match self {
-            Extension::Zip => vec![
-                0x50, 0x4b, 0x03, 0x04, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x26, 0x79, 0x5d, 0x40,
-                0xde, 0xbd, 0xac, 0x82, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x0a, 0x00,
-                0x1c, 0x00,
-            ],
-            Extension::Pdf => vec![
-                0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe1, 0xe9, 0xeb,
-            ],
-            Extension::Doc => vec![0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
-            _ => vec![],
-        }
-    }
-}
+mod fake_file;
+use fake_file::{Extension, FakeFile};
 
 fn main() {
     let mut rng = StdRng::from_os_rng();
@@ -81,20 +54,19 @@ fn main() {
 
     let filename: &PathBuf = matches.get_one("output").unwrap();
     let size: &u64 = matches.get_one("size").unwrap();
-    let ext = filename
-        .extension()
-        .and_then(|ext| ext.to_str())
-        .and_then(|ext| Extension::from_str(ext).ok())
-        .unwrap_or(Extension::Txt);
-    let filetype: &Extension = matches.get_one::<Extension>("type").unwrap_or(&ext);
 
-    let header = filetype.header();
+    // Create FakeFile instance
+    let fake_file = if let Some(file_type) = matches.get_one::<Extension>("type") {
+        // Use explicitly specified type
+        FakeFile::new(filename.clone(), *size, *file_type)
+    } else {
+        // Infer type from filename
+        FakeFile::from_filename_and_size(filename.clone(), *size)
+    };
 
-    let mut buffer = File::create(filename.with_extension(filetype.as_ref())).unwrap();
-
-    let mut rest = vec![0u8; size.saturating_sub(header.len() as u64) as usize];
-    rng.fill_bytes(&mut rest);
-    buffer.write_all(&header).unwrap();
-
-    io::copy(&mut &rest[..], &mut buffer).unwrap();
+    // Generate and write the file
+    if let Err(e) = fake_file.write_to_disk(&mut rng) {
+        eprintln!("Error creating file: {}", e);
+        std::process::exit(1);
+    }
 }
