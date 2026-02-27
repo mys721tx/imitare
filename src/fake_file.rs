@@ -1,9 +1,9 @@
 use std::io;
 use std::io::prelude::*;
 use std::str::FromStr;
-use std::{fs::File, path::PathBuf};
+use std::{fs::File, path::Path, path::PathBuf};
 
-use rand::prelude::*;
+use rand_core::Rng;
 use strum_macros::{AsRefStr, Display, EnumString};
 
 #[derive(Clone, Copy, EnumString, AsRefStr, Display, PartialEq, Debug)]
@@ -50,7 +50,7 @@ impl FakeFile {
     }
 
     /// Infers the file type from the filename extension, defaulting to Txt
-    pub fn infer_type_from_filename(filename: &PathBuf) -> Extension {
+    pub fn infer_type_from_filename(filename: &Path) -> Extension {
         filename
             .extension()
             .and_then(|ext| ext.to_str())
@@ -99,6 +99,8 @@ impl FakeFile {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chacha20::ChaCha12Rng;
+    use rand_core::SeedableRng;
     use std::io::Read;
     use tempfile::TempDir;
 
@@ -148,7 +150,7 @@ mod tests {
         assert_eq!(fake_file.output_filename(), PathBuf::from("test.pdf"));
 
         // Test that the buffer has the correct size and header
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
         let buffer = fake_file.create_buffer(&mut rng);
         assert_eq!(buffer.len(), size as usize);
 
@@ -189,7 +191,7 @@ mod tests {
         let fake_file = FakeFile::from_filename_and_size(PathBuf::from("test.pdf"), 1024);
 
         // Test that it correctly inferred PDF type by checking the buffer has PDF header
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
         let buffer = fake_file.create_buffer(&mut rng);
         assert_eq!(buffer.len(), 1024);
 
@@ -209,7 +211,7 @@ mod tests {
     #[test]
     fn test_create_buffer_with_header() {
         let fake_file = FakeFile::new(PathBuf::from("test.pdf"), 100, Extension::Pdf);
-        let mut rng = StdRng::seed_from_u64(42); // Deterministic for testing
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
 
         let buffer = fake_file.create_buffer(&mut rng);
         let header = Extension::Pdf.header();
@@ -232,7 +234,7 @@ mod tests {
     fn test_create_buffer_small_size() {
         // Test when requested size is smaller than header
         let fake_file = FakeFile::new(PathBuf::from("test.pdf"), 5, Extension::Pdf);
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
 
         let buffer = fake_file.create_buffer(&mut rng);
         let header = Extension::Pdf.header();
@@ -247,7 +249,7 @@ mod tests {
     #[test]
     fn test_create_buffer_txt_file() {
         let fake_file = FakeFile::new(PathBuf::from("test.txt"), 100, Extension::Txt);
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
 
         let buffer = fake_file.create_buffer(&mut rng);
 
@@ -267,7 +269,7 @@ mod tests {
         let file_path = temp_dir.path().join("test.pdf");
 
         let fake_file = FakeFile::new(file_path.clone(), 1000, Extension::Pdf);
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
 
         // Write the file
         fake_file.write_to_disk(&mut rng).unwrap();
@@ -298,7 +300,7 @@ mod tests {
         std::env::set_current_dir(&temp_dir).unwrap();
 
         let fake_file = FakeFile::new(PathBuf::from("relative_test.zip"), 500, Extension::Zip);
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
 
         // Write the file
         fake_file.write_to_disk(&mut rng).unwrap();
@@ -312,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_different_file_types_have_different_headers() {
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
 
         let pdf_file = FakeFile::new(PathBuf::from("test.pdf"), 100, Extension::Pdf);
         let zip_file = FakeFile::new(PathBuf::from("test.zip"), 100, Extension::Zip);
@@ -340,7 +342,7 @@ mod tests {
     #[test]
     fn test_zero_size_file() {
         let fake_file = FakeFile::new(PathBuf::from("test.pdf"), 0, Extension::Pdf);
-        let mut rng = StdRng::seed_from_u64(42);
+        let mut rng = ChaCha12Rng::seed_from_u64(42);
 
         let buffer = fake_file.create_buffer(&mut rng);
         let header = Extension::Pdf.header();
