@@ -1,13 +1,14 @@
 use std::path::PathBuf;
 
 use clap::{value_parser, Arg, Command};
-use rand::prelude::*;
+use getrandom::rand_core::UnwrapErr;
+use getrandom::SysRng;
 
 mod fake_file;
 use fake_file::{Extension, FakeFile};
 
 fn main() {
-    let mut rng = StdRng::from_os_rng();
+    let mut rng = UnwrapErr(SysRng);
 
     let matches = Command::new("imitare")
         .version("0.1")
