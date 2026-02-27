@@ -222,6 +222,7 @@ name = "imitare"
 version = "0.2.0"
 dependencies = [
  "clap",
+ "getrandom 0.4.1",
  "rand",
  "strum",
  "strum_macros",
