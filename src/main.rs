@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use clap::{value_parser, Arg, Command};
-use getrandom::rand_core::UnwrapErr;
+use clap::{Arg, Command, value_parser};
 use getrandom::SysRng;
+use getrandom::rand_core::UnwrapErr;
 
 mod fake_file;
 use fake_file::{Extension, FakeFile};
