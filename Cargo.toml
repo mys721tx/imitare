@@ -17,3 +17,8 @@ strum_macros = "0.28.0"
 [dev-dependencies]
 tempfile = "3.26.0"
 chacha20 = { version = "0.10.0", features = ["rng"] }
+criterion = "0.8.2"
+
+[[bench]]
+name = "fake_file"
+harness = false

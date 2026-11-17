@@ -4,8 +4,7 @@ use clap::{Arg, Command, value_parser};
 use getrandom::SysRng;
 use getrandom::rand_core::UnwrapErr;
 
-mod fake_file;
-use fake_file::{Extension, FakeFile};
+use imitare::{Extension, FakeFile};
 
 fn main() {
     let mut rng = UnwrapErr(SysRng);
